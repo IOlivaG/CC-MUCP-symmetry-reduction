@@ -58,11 +58,10 @@ jupyter notebook ccmucp_symmetry_reduction.ipynb
 
 The notebook can be run from start to finish, or individual sections can be explored independently using the precomputed results file.
 
-## References
+## Contributing
 
-1. R. Kehlhofer, J. Warner, H. Nielsen, T. Bachmann. *Combined-Cycle Gas and Steam Turbine Power Plants*, 3rd ed., PennWell, 2009.
-2. D. Rajan, S. Takriti. Minimum up/down polytopes of the unit commitment problem with start-up costs. IBM Research Report RC23628, 2005.
-3. P. Bendotti, P. Fouilhoux, C. Rottner. The min-up/min-down unit commitment polytope. *J. Comb. Optim.*, 36(3), 1024--1058, 2018.
-4. C. Liu, M. Shahidehpour, Z. Li, L. Wu. Component and mode models for the short-term scheduling of combined-cycle units. *IEEE Trans. Power Syst.*, 24(2), 976--990, 2009.
-5. G. Morales-Espa\~na, C. M. Correa-Posada, A. Ramos. Tight and compact MIP formulation of configuration-based combined-cycle units. *IEEE Trans. Power Syst.*, 31(2), 1350--1359, 2016.
-6. L. Fan, K. Pan, Y. Guan. A strengthened mixed-integer linear programming formulation for combined-cycle units. *EJOR*, 275(3), 865--881, 2019.
+Contributions are welcome. Please open an issue or submit a pull request for suggestions, improvements, or bug fixes. You can also reach out via [Isaac Oliva-González's homepage](https://iolivag.github.io).
+
+## License
+
+This project is licensed under the MIT License.
