@@ -7,6 +7,9 @@ When GTs within a package are identical, the problem exhibits permutation symmet
 ## Repository Structure
 
 ```
+├── Project.toml                       — Julia dependencies
+├── Manifest.toml                      — Pinned dependency versions
+├── CHANGELOG.md                       — Model and documentation changes
 ├── ccmucp_formulation.md              — Mathematical formulation and instance data
 ├── ccmucp_symmetry_reduction.ipynb     — Jupyter notebook with the MILP model
 └── results/
@@ -20,7 +23,7 @@ When GTs within a package are identical, the problem exhibits permutation symmet
 - **Mathematical Formulation:** MILP formulation under a component-based approach, with GT and ST constraints, coupling constraints (CC1–CC5), and the global demand constraint. The full formulation is documented in `ccmucp_formulation.md`.
 - **Symmetry Structure:** intra-package permutation symmetry and a demand-aware lexicographic ordering to break it.
 - **Computational Study:** implementation in JuMP, enumeration of optimal schedules, and analysis of the resulting orbits.
-- **Results:** comparison of baseline enumeration (108 solutions) against the symmetry-reduced enumeration.
+- **Results:** comparison of baseline enumeration (108 commitment patterns) against the symmetry-reduced enumeration.
 
 ## Results File
 
@@ -28,8 +31,8 @@ The file `results/ccmucp_results.jld2` contains precomputed results for the two-
 
 | Variable | Description |
 |---|---|
-| `sols_base` | 108 optimal schedules (no symmetry breaking) |
-| `sols_sym` | ~8 optimal schedules (with symmetry breaking) |
+| `sols_base` | 108 optimal commitment schedules (no symmetry breaking) |
+| `sols_sym` | 8 optimal commitment schedules (with symmetry breaking) |
 | `best_cost` | Optimal cost: \$489,683 |
 | `demand_rank` | Permutation ranking periods by decreasing demand |
 
@@ -41,13 +44,19 @@ results = load("results/ccmucp_results.jld2")
 
 ## Requirements
 
-- Julia 1.9 or higher
-- Packages: JuMP, HiGHS, JLD2
+- Julia 1.12 or higher
+- Dependencies are pinned in `Project.toml` / `Manifest.toml` (JuMP, HiGHS, JLD2)
 
-Install with:
+Instantiate the environment:
 ```julia
 using Pkg
-Pkg.add(["JuMP", "HiGHS", "JLD2"])
+Pkg.activate(".")
+Pkg.instantiate()
+```
+
+Or from the shell:
+```bash
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
 ## Running the Notebook

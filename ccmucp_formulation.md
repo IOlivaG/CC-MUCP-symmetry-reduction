@@ -48,6 +48,7 @@ $$
 \hline
 x_{k,g}^t & \{0,1\} & \text{GT } g \text{ of package } k \text{ is on at } t \\
 u_{k,g}^t & \{0,1\} & \text{GT } g \text{ starts up at } t \\
+w_{k,g}^t & \{0,1\} & \text{auxiliary warm-up indicator for GT } g \\
 y_{k,g,\mathrm{OC}}^t & \{0,1\} & \text{GT operates in open cycle at } t \\
 y_{k,g,\mathrm{CC}}^t & \{0,1\} & \text{GT operates in combined cycle at } t \\
 p_{k,g,\mathrm{OC}}^t & \mathbb{R}_{\geq 0} & \text{GT production in open cycle (MW)} \\
@@ -143,6 +144,7 @@ $$
 $$
 \begin{align}
 &\textbf{(SU-GT)} & u_{k,g}^t &\geq x_{k,g}^t - x_{k,g}^{t-1} \\
+&\textbf{(U-GT)} & u_{k,g}^t &\leq x_{k,g}^t,\quad u_{k,g}^t \leq 1-x_{k,g}^{t-1}\ (t\geq 2) \\
 &\textbf{(MU-GT)} & x_{k,g}^{t+s} &\geq u_{k,g}^t, \quad s = 1,\ldots,\min(L_g-1,\,T-t) \\
 &\textbf{(MD-GT)} & x_{k,g}^{t+s} &\leq 1-(x_{k,g}^{t-1}-x_{k,g}^t), \quad t\geq 2,\; s=1,\ldots,\min(\ell_g-1,\,T-t) \\
 &\textbf{(MOD)}   & x_{k,g}^t &= y_{k,g,\mathrm{OC}}^t + y_{k,g,\mathrm{CC}}^t \\
@@ -156,33 +158,38 @@ $$
 $$
 \begin{align}
 &\textbf{(SU-ST)} & u_{k,v}^t &\geq x_{k,v}^t - x_{k,v}^{t-1} \\
+&\textbf{(U-ST)} & u_{k,v}^t &\leq x_{k,v}^t,\quad u_{k,v}^t \leq 1-x_{k,v}^{t-1}\ (t\geq 2) \\
 &\textbf{(MU-ST)} & x_{k,v}^{t+s} &\geq u_{k,v}^t, \quad s=1,\ldots,\min(L_v-1,\,T-t) \\
 &\textbf{(MD-ST)} & x_{k,v}^{t+s} &\leq 1-(x_{k,v}^{t-1}-x_{k,v}^t), \quad t\geq 2,\; s=1,\ldots,\min(\ell_v-1,\,T-t) \\
 &\textbf{(PB-ST)} & P_{\min}^v x_{k,v}^t &\leq p_{k,v}^t \leq \alpha \sum_{g=1}^{n_{gt}} y_{k,g,\mathrm{CC}}^t
 \end{align}
 $$
 
-**Coupling constraints** (for each $k$, $t$):
+**Coupling constraints** (for each $k$, $t$; CC4a--CC4b for each $g$):
 
 $$
 \begin{align}
-&\textbf{(CC1)} && \textstyle\sum_{g=1}^{n_{gt}} x_{k,g}^t \geq m_k \cdot x_{k,v}^t && \text{min GTs for ST} \\
+&\textbf{(CC1)} && \textstyle\sum_{g=1}^{n_{gt}} y_{k,g,\mathrm{CC}}^t \geq m_k \cdot x_{k,v}^t && \text{min GTs in CC for ST} \\
 &\textbf{(CC2)} && y_{k,g,\mathrm{CC}}^t \leq x_{k,v}^t && \text{CC mode only if ST on} \\
 &\textbf{(CC3)} && y_{k,g,\mathrm{OC}}^t \leq 1 - x_{k,v}^t && \text{OC mode only if ST off} \\
-&\textbf{(CC4)} && m_k \cdot u_{k,v}^t \leq \textstyle\sum_{g=1}^{n_{gt}} x_{k,g}^{t-\delta^{\mathrm{up}}},\; t > \delta^{\mathrm{up}} && \text{ST start requires warm GTs} \\
-&\textbf{(CC5)} && x_{k,g}^{t+s} \geq x_{k,v}^{t-1} - x_{k,v}^t,\; s=0,\ldots,\delta^{\mathrm{dn}}-1 && \text{GTs stay on after ST shutdown}
+&\textbf{(CC4a)} && w_{k,g}^t \leq x_{k,g}^{t-s},\quad s=1,\ldots,\delta^{\mathrm{up}},\; t > \delta^{\mathrm{up}} && \text{warm-up window} \\
+&\textbf{(CC4b)} && w_{k,g}^t \leq x_{k,g}^{t} && \text{same GTs at } t \\
+&\textbf{(CC4c)} && \textstyle\sum_{g=1}^{n_{gt}} w_{k,g}^t \geq m_k \cdot u_{k,v}^t && \text{at least } m_k \text{ warm GTs} \\
+&\textbf{(CC5)} && \textstyle\sum_{g=1}^{n_{gt}} x_{k,g}^{t+s} \geq m_k (x_{k,v}^{t-1} - x_{k,v}^t),\; s=0,\ldots,\delta^{\mathrm{dn}}-1 && \text{GTs stay on after ST shutdown}
 \end{align}
 $$
+
+For \(t \le \delta^{\mathrm{up}}\), \(u_{k,v}^t = 0\) and \(w_{k,g}^t = 0\).
 
 **Global demand constraint:**
 
 $$
-\textbf{(D)} \quad \sum_{k \in \mathcal{K}} \left[ \sum_{g=1}^{n_{gt}} \left( p_{k,g,\mathrm{OC}}^t + p_{k,g,\mathrm{CC}}^t \right) + p_{k,v}^t \right] \geq D_t, \quad \forall t \in \mathcal{T}
+\textbf{(D)} \quad \sum_{k \in \mathcal{K}} \left[ \sum_{g=1}^{n_{gt}} \left( p_{k,g,\mathrm{OC}}^t + p_{k,g,\mathrm{CC}}^t \right) + p_{k,v}^t \right] = D_t, \quad \forall t \in \mathcal{T}
 $$
 
 <div style="font-size: 0.8em;">
 
-> **Note on formulation sources.** The GT and ST constraints follow the $(x,u,p)$ formulation of Rajan & Takriti<sup>[[2]](#ref2)</sup> as analysed in Bendotti et al.<sup>[[3]](#ref3)</sup>, and the coupling constraints (CC1--CC5) are based on the component-based model of Liu et al.<sup>[[4]](#ref4)</sup>. Two adaptations are introduced: **(CC4)** is reformulated as $m_k \cdot u_{k,v}^t \leq \sum_g x_{k,g}^{t-\delta^{\mathrm{up}}}$ to avoid requiring a specific designated subset of GTs for ST start-up; and the ST production upper bound in **(PB-ST)** uses $\alpha \sum_g y_{k,g,\mathrm{CC}}^t$, which is exact given that (CC2) and (CC3) force $y_{k,g,\mathrm{CC}}^t = x_{k,g}^t$ when the ST is on and $y_{k,g,\mathrm{CC}}^t = 0$ otherwise.
+> **Note on formulation sources.** The GT and ST constraints follow the $(x,u,p)$ formulation of Rajan & Takriti<sup>[[2]](#ref2)</sup> as analysed in Bendotti et al.<sup>[[3]](#ref3)</sup>, and the coupling constraints (CC1--CC5) are based on the component-based model of Liu et al.<sup>[[4]](#ref4)</sup>. Three modeling choices are made explicit. First, **(CC3)** is a mode-aggregation assumption: when the ST is on, every online GT is in CC mode, so the model is a restricted component-based formulation rather than the general model of Liu et al. Second, **(CC4)** uses auxiliary binaries $w_{k,g}^t$ to require that at least $m_k$ GTs have been on for $\delta^{\mathrm{up}}$ periods and remain on at $t$. Third, the ST bound in **(PB-ST)** is a capacity bound, $p_{k,v}^t \leq \alpha \sum_g y_{k,g,\mathrm{CC}}^t$; it is not a heat balance and may overestimate the ST output at partial GT load.
 
 </div>
 
@@ -190,9 +197,9 @@ $$
 
 ## 4. Instance Parameters (Two-Package Example)
 
-The computational study considers a CC plant with $K = 2$ packages, each consisting of $n_{gt} = 3$ gas turbines and one steam turbine ($3 \times 1$ configuration), over a weekly horizon of $T = 21$ periods structured as three load levels per day (Low, Mid, High). The packages are assumed identical in their physical parameters, which is the typical setting for studying symmetry reduction.
+The computational study considers a CC plant with $K = 2$ packages, each consisting of $n_{gt} = 3$ gas turbines and one steam turbine ($3 \times 1$ configuration), over a horizon of $T = 21$ load-level periods (7 days × 3 load levels: Low, Mid, High). Minimum up/down times and coupling windows are expressed in these periods. The packages are assumed identical in their physical parameters, which is the typical setting for studying symmetry reduction.
 
-In combined-cycle mode, GTs operate at lower fixed and variable costs than in open-cycle mode, reflecting the efficiency gain from heat recovery. The ST incurs no variable cost ($c_p^v = 0$) since it runs on residual exhaust heat, and its higher start-up cost ($c_0^v = 15{,}000$) and longer minimum up/down times ($L_v = 3$, $\ell_v = 2$) reflect the thermal inertia of the steam cycle. Coupling parameters $m_k = 2$, $\delta^{\mathrm{up}} = 1$, and $\delta^{\mathrm{dn}} = 1$ enforce that at least two GTs must be online before the ST can start, and must remain so after it shuts down.
+In combined-cycle mode, GTs operate at lower fixed and variable costs than in open-cycle mode, reflecting the efficiency gain from heat recovery. The ST incurs no variable cost ($c_p^v = 0$) since it runs on residual exhaust heat, and its higher start-up cost ($c_0^v = 15{,}000$) and longer minimum up/down times ($L_v = 3$, $\ell_v = 2$) reflect the thermal inertia of the steam cycle. Coupling parameters $m_k = 2$, $\delta^{\mathrm{up}} = 1$, and $\delta^{\mathrm{dn}} = 1$ enforce that at least two GTs must be online before the ST can start, and at least two must remain online after it shuts down.
 
 <div align="center">
 <table style="border: none; border-collapse: collapse;">
@@ -257,8 +264,8 @@ $$
 \hline
 \hline
 m_k & 2 & \text{Minimum GTs required to operate the ST} \\
-\delta^{\mathrm{up}} \, (\text{h}) & 1 & \text{Periods GTs on before ST can start} \\
-\delta^{\mathrm{dn}} \, (\text{h}) & 1 & \text{Periods GTs remain on after ST shutdown} \\
+\delta^{\mathrm{up}} \, (\text{periods}) & 1 & \text{Periods GTs on before ST can start} \\
+\delta^{\mathrm{dn}} \, (\text{periods}) & 1 & \text{Periods GTs remain on after ST shutdown} \\
 \hline
 \end{array}
 $$
@@ -267,7 +274,7 @@ $$
 
 ### 4.1 Demand Profile
 
-The demand profile is structured as three load levels per day for a full week, totalling 21 periods. With a total system capacity of
+The demand profile consists of 21 periods labelled by day and load level, with three load levels per day. With a total system capacity of
 
 $$K \cdot (n_{gt} \cdot P_{\max}^{\mathrm{CC}} + n_{gt} \cdot \alpha) = 2 \cdot (3 \cdot 145 + 3 \cdot 40) = 1110 \text{ MW},$$
 
@@ -275,7 +282,7 @@ peak periods require near-full utilisation of both packages, while low-demand pe
 
 <div align="center">
 
-**Table 3.** Weekly demand profile.
+**Table 3.** Demand profile.
 
 $$
 \begin{array}{lcr}
@@ -313,9 +320,9 @@ $$
 **Key demand statistics:**
 - Peak demand: **1000 MW** at $t=15$ (Fri-High)
 - Minimum demand: **400 MW** at $t=4$ (Tue-Low)
-- Average demand: **668.6 MW**
+- Average demand: **660.0 MW**
 - Number of high-demand periods (demand $>$ 850 MW): 5
-- Number of low-demand periods (demand $<$ 500 MW): 6
+- Number of low-demand periods (demand $<$ 500 MW): 5
 
 The demand ranking permutation $\pi$ orders periods from highest to lowest demand and is used to assign lower indices to units most active during high-demand periods:
 
@@ -325,22 +332,22 @@ $$\pi = [15, 9, 12, 3, 6, 18, 21, 14, 17, 20, 8, 11, 2, 5, 16, 19, 13, 7, 1, 10,
 
 The symmetry-breaking ordering constraints follow a **demand-aware lexicographic ordering** approach. The idea is to exploit the fact that not all time periods are equal: periods with higher demand stress the system more, so units active during those periods carry more significance. This provides a natural criterion for selecting a canonical representative from each equivalence class.
 
-The approach works in two steps. First, time periods are ranked from highest to lowest demand using the permutation $\pi$. Then, within each package, GTs are ordered so that those covering more high-demand periods receive lower indices, enforced by prefix-sum inequalities:
+The approach works in two steps. First, time periods are ranked from highest to lowest demand using the permutation $\pi$. Then, within each package, GTs are ordered lexicographically by their commitment rows in the demand-ranked order. The order is enforced with superincreasing weights:
 
 $$
-\sum_{r=1}^{R} x_{k,g}^{\pi(r)} \geq \sum_{r=1}^{R} x_{k,g+1}^{\pi(r)},
-\quad \forall k,\; g = 1,\ldots,n_{gt}-1,\; R = 1,\ldots,T
+\sum_{r=1}^{T} 2^{T-r} x_{k,g}^{\pi(r)} \geq \sum_{r=1}^{T} 2^{T-r} x_{k,g+1}^{\pi(r)},
+\quad \forall k,\; g = 1,\ldots,n_{gt}-1.
 $$
 
-Only intra-package GT ordering is applied; packages are treated as distinguishable, reflecting the fact that each package is a distinct physical asset with its own steam turbine and HRSG. This follows the general structure of lexicographic symmetry-breaking methods in integer programming, adapted here to the temporal structure of unit commitment problems.
+Because $2^{T-r} > \sum_{s=r+1}^{T} 2^{T-s}$, this inequality is equivalent to lexicographic order on the binary rows. Only intra-package GT ordering is applied; packages are kept labeled. The demand ranking determines which representative is selected; the reduction itself comes from the intra-package symmetry.
 
 ---
 
 ## 5. Results Summary and Conclusions
 
-The computational study is conducted in the companion notebook `ccmucp_symmetry_reduction.ipynb` using the instance parameters described in §4. The baseline formulation (no symmetry breaking) yields **108 optimal solutions** at cost \$489,683.
+The computational study is conducted in the companion notebook `ccmucp_symmetry_reduction.ipynb` using the instance parameters described in §4. The baseline formulation (no symmetry breaking) yields **108 optimal commitment patterns** at cost \$489,683.
 
-**Symmetry reduction.** Applying the demand-aware GT-level ordering reduces the 108 baseline solutions to **approximately 8 canonical representatives** under the symmetry group $H = S_{n_{\mathrm{gt}}} \times \cdots \times S_{n_{\mathrm{gt}}}$ (order $(n_{\mathrm{gt}}!)^K = 36$ for $n_{\mathrm{gt}}=3$, $K=2$). The exact orbit decomposition depends on the specific schedules: orbits where packages have identical GT commitment patterns remain intact, while those with differences produce distinct representatives. This reflects the correct symmetry of the problem: GTs within the same package are interchangeable, but each package is a distinct physical asset.
+**Symmetry reduction.** Applying the demand-aware GT-level ordering reduces the 108 commitment patterns to **8 canonical representatives** under the intra-package symmetry. The orbit sizes depend on how many GTs within a package have identical commitment rows: when two GTs are identical, the corresponding stabilizer is nontrivial and the orbit is smaller. The observed sizes 9 and 18 reflect these stabilizers. GTs within a package are interchangeable; packages are kept labeled.
 
 <div align="center">
 
@@ -349,11 +356,11 @@ The computational study is conducted in the companion notebook `ccmucp_symmetry_
 $$
 \begin{array}{lcc}
 \hline
-\text{Mode} & \text{Solutions} & \text{Reduction factor} \\
+\text{Mode} & \text{Commitment patterns} & \text{Reduction factor} \\
 \hline
 \hline
 \texttt{:none} & 108 & 1\times \\
-\texttt{:symmetry} & \sim8 & \sim13.5\times \\
+\texttt{:symmetry} & 8 & 13.5\times \\
 \hline
 \end{array}
 $$
@@ -362,7 +369,7 @@ $$
 
 ### 5.3 Conclusions
 
-The demand-aware lexicographic ordering exploits the intra-package symmetry that arises when identical GTs share the same steam turbine within a CC package. The reduction from 108 to ~8 solutions eliminates all redundancy from GT relabelling while preserving the identity of each package. This matches the physical structure of the problem: GTs within a package are genuinely interchangeable (they share the same HRSG and operating conditions), but packages themselves are distinct assets.
+The demand-aware lexicographic ordering exploits the intra-package symmetry that arises when identical GTs share the same steam turbine within a CC package. The reduction from 108 to 8 commitment patterns eliminates the redundancy from GT relabelling within each package while preserving package labels. GTs within a package are interchangeable; packages are kept labeled.
 
 The grouping of variables into symmetry-equivalent classes is also relevant beyond solution reduction: it relates to the polyhedral structure of the problem, where characterising the facet-defining inequalities under subgroup actions is a natural extension.
 
